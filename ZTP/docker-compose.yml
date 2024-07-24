@@ -1,0 +1,22 @@
+services:
+  dhcp-server:
+    image: networkboot/dhcpd:latest
+    container_name: dhcp-server
+    ports:
+      - "67:67/udp"
+    volumes:
+      - /usr/local/cisco/ZTP/dhcpd_dir/data:/data
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+    restart: always
+
+  http-server:
+    build: .
+    container_name: http-server
+    ports:
+      - "80:80"
+    volumes:
+      - /usr/local/cisco/ZTP/http_dir/flask_app:/app/flask_app
+      - /usr/local/cisco/ZTP/http_dir/image:/app/image
+    restart: always

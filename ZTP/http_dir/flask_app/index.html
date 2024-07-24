@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新质生产力</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px 40px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            margin: 40px 20px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .json-output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+        }
+        .switch-entry {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .switch-entry input {
+            flex: 1;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .flex-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .half-width {
+            flex: 1;
+        }
+        .full-width {
+            width: 100%;
+        }
+        .button-group {
+            display: flex;
+            align-items: flex-end;
+            gap: 20px;
+        }
+        .file-input-group {
+            flex: 1;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .progress-bar {
+            width: 0;
+            height: 20px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>新质生产力</h1>
+        <div class="section">
+            <div class="input-group">
+                <label for="hostname">Hostname</label>
+                <input type="text" id="hostname" placeholder="e.g., hostname_1">
+            </div>
+        </div>
+        <div id="switchesContainer" class="section">
+            <h2>Switch Information</h2>
+            <div class="switch-entry">
+                <input type="number" id="stackNumber1" placeholder="Stack Number" min="1" max="16">
+                <input type="number" id="stackPriority1" placeholder="Stack Priority" min="1" max="15">
+                <input type="text" id="serialNumber1" placeholder="Serial Number">
+            </div>
+            <div class="switch-entry">
+                <input type="number" id="stackNumber2" placeholder="Stack Number" min="1" max="16">
+                <input type="number" id="stackPriority2" placeholder="Stack Priority" min="1" max="15">
+                <input type="text" id="serialNumber2" placeholder="Serial Number">
+            </div>
+            <div class="switch-entry">
+                <input type="number" id="stackNumber3" placeholder="Stack Number" min="1" max="16">
+                <input type="number" id="stackPriority3" placeholder="Stack Priority" min="1" max="15">
+                <input type="text" id="serialNumber3" placeholder="Serial Number">
+            </div>
+            <div class="switch-entry">
+                <input type="number" id="stackNumber4" placeholder="Stack Number" min="1" max="16">
+                <input type="number" id="stackPriority4" placeholder="Stack Priority" min="1" max="15">
+                <input type="text" id="serialNumber4" placeholder="Serial Number">
+            </div>
+            <button type="button" onclick="addSwitch()">Add Switch</button>
+        </div>
+        <div class="section">
+            <div class="input-group">
+                <label for="versionUpgrade">Switch Upgrade File</label>
+                <input type="text" id="versionUpgrade" placeholder="e.g., cat9k_iosxe.17.09.05.SPA.bin">
+            </div>
+            <div class="input-group">
+                <label for="interfaceVlan">Interface VLAN</label>
+                <input type="text" id="interfaceVlan" placeholder="e.g., 10">
+            </div>
+            <div class="input-group">
+                <label for="ipAddress">IP Address</label>
+                <input type="text" id="ipAddress" placeholder="e.g., 10.0.0.200">
+            </div>
+            <div class="input-group">
+                <label for="subnetMask">Subnet Mask</label>
+                <input type="text" id="subnetMask" placeholder="e.g., 255.255.255.0">
+            </div>
+            <div class="input-group">
+                <label for="defaultGateway">Default Gateway</label>
+                <input type="text" id="defaultGateway" placeholder="e.g., 10.0.0.1">
+            </div>
+            <div class="input-group">
+                <label for="switchConfigTemplate">Switch Configuration Template</label>
+                <textarea id="switchConfigTemplate" rows="4" placeholder="Paste switch configuration template"></textarea>
+            </div>
+            <button type="button" onclick="generateAndSubmitJSON()">Generate and Submit JSON</button>
+        </div>
+        <div class="section button-group">
+            <div class="file-input-group">
+                <div class="input-group">
+                    <label for="csvFile">Upload CSV File</label>
+                    <input type="file" id="csvFile" accept=".csv">
+                </div>
+                <button type="button" onclick="uploadCSV()">Upload CSV</button>
+            </div>
+            <button class="half-width" type="button" onclick="downloadCSVTemplate()">Download CSV Template</button>
+        </div>
+        <div class="section button-group">
+            <div class="file-input-group">
+                <div class="input-group">
+                    <label for="imageFile">Upload Device Image</label>
+                    <input type="file" id="imageFile" accept=".bin,.img,.iso">
+                </div>
+                <button type="button" onclick="uploadImage()">Upload Image</button>
+                <div class="progress-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+        <div class="json-output" id="jsonOutput"></div>
+    </div>
+
+    <script>
+        let switchCount = 4;
+
+        function addSwitch() {
+            switchCount++;
+            const switchContainer = document.getElementById('switchesContainer');
+            const switchEntry = document.createElement('div');
+            switchEntry.className = 'switch-entry';
+
+            const stackNumber = document.createElement('input');
+            stackNumber.setAttribute('type', 'number');
+            stackNumber.setAttribute('placeholder', 'Stack Number');
+            stackNumber.setAttribute('min', '1');
+            stackNumber.setAttribute('max', '16');
+            stackNumber.id = `stackNumber${switchCount}`;
+
+            const stackPriority = document.createElement('input');
+            stackPriority.setAttribute('type', 'number');
+            stackPriority.setAttribute('placeholder', 'Stack Priority');
+            stackPriority.setAttribute('min', '1');
+            stackPriority.setAttribute('max', '15');
+            stackPriority.id = `stackPriority${switchCount}`;
+
+            const serialNumber = document.createElement('input');
+            serialNumber.setAttribute('type', 'text');
+            serialNumber.setAttribute('placeholder', 'Serial Number');
+            serialNumber.id = `serialNumber${switchCount}`;
+
+            switchEntry.appendChild(stackNumber);
+            switchEntry.appendChild(stackPriority);
+            switchEntry.appendChild(serialNumber);
+
+            switchContainer.appendChild(switchEntry);
+        }
+
+        function generateAndSubmitJSON() {
+            const hostname = document.getElementById('hostname').value;
+            const versionUpgrade = document.getElementById('versionUpgrade').value;
+            const interfaceVlan = document.getElementById('interfaceVlan').value;
+            const ipAddress = document.getElementById('ipAddress').value;
+            const subnetMask = document.getElementById('subnetMask').value;
+            const defaultGateway = document.getElementById('defaultGateway').value;
+            const switchConfigTemplate = document.getElementById('switchConfigTemplate').value;
+
+            const switches = [];
+            for (let i = 1; i <= switchCount; i++) {
+                const serialNumber = document.getElementById(`serialNumber${i}`).value;
+                const stackPriority = document.getElementById(`stackPriority${i}`).value;
+                const stackNumber = document.getElementById(`stackNumber${i}`).value;
+
+                if (serialNumber && stackPriority && stackNumber) {
+                    switches.push({
+                        serial_number: serialNumber,
+                        stack_priority: parseInt(stackPriority),
+                        stack_number: parseInt(stackNumber)
+                    });
+                }
+            }
+
+            const jsonData = {
+                [hostname]: {
+                    config: {
+                        version_upgrade: versionUpgrade,
+                        hostname: hostname,
+                        interface_vlan: interfaceVlan,
+                        ip_address: ipAddress,
+                        subnet_mask: subnetMask,
+                        default_gateway: defaultGateway
+                    },
+                    switches: switches
+                }
+            };
+
+            document.getElementById('jsonOutput').innerText = JSON.stringify(jsonData, null, 2);
+
+            // Send POST request to update device_init_stack.json
+            fetch('/update_json', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('device_init_stack.json updated successfully');
+                } else {
+                    alert('Error updating device_init_stack.json');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+            // Send POST request to update device_init_config.cfg
+            fetch('/update_config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
+                body: switchConfigTemplate
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('device_init_config.cfg updated successfully');
+                } else {
+                    alert('Error updating device_init_config.cfg');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function uploadCSV() {
+            const csvFile = document.getElementById('csvFile').files[0];
+            if (!csvFile) {
+                alert('Please select a CSV file to upload');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', csvFile);
+
+            fetch('/upload_csv', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('CSV file uploaded and processed successfully');
+                } else {
+                    alert('Error processing CSV file');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function downloadCSVTemplate() {
+            window.location.href = '/download_template';
+        }
+
+        function uploadImage() {
+            const imageFile = document.getElementById('imageFile').files[0];
+            if (!imageFile) {
+                alert('Please select an image file to upload');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', imageFile);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload_image', true);
+
+            xhr.upload.onprogress = function (event) {
+                if (event.lengthComputable) {
+                    const percentComplete = (event.loaded / event.total) * 100;
+                    const progressBar = document.getElementById('progress-bar');
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.textContent = Math.round(percentComplete) + '%';
+                }
+            };
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    alert('Image file uploaded successfully');
+                    const progressBar = document.getElementById('progress-bar');
+                    progressBar.style.width = '0%';  // Reset progress bar
+                    progressBar.textContent = '';
+                } else {
+                    alert('Error uploading image file');
+                }
+            };
+
+            xhr.onerror = function () {
+                alert('Error uploading image file');
+            };
+
+            xhr.send(formData);
+        }
+    </script>
+</body>
+</html>
