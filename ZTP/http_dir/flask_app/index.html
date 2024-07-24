@@ -325,7 +325,7 @@
         function uploadCSV() {
             const csvFile = document.getElementById('csvFile').files[0];
             if (!csvFile) {
-                alert('Please select a CSV file to upload');
+                alert('请先选择一个 CSV 文件');
                 return;
             }
 
@@ -339,9 +339,9 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('CSV file uploaded and processed successfully');
+                    alert('CSV 文件上传并处理成功');
                 } else {
-                    alert('Error processing CSV file');
+                    alert('处理 CSV 文件时出错');
                 }
             })
             .catch(error => {
@@ -356,7 +356,7 @@
         function uploadImage() {
             const imageFile = document.getElementById('imageFile').files[0];
             if (!imageFile) {
-                alert('Please select an image file to upload');
+                alert('请先选择一个设备镜像文件');
                 return;
             }
 
@@ -377,17 +377,17 @@
 
             xhr.onload = function () {
                 if (xhr.status === 200) {
-                    alert('Image file uploaded successfully');
+                    alert('设备镜像文件上传成功');
                     const progressBar = document.getElementById('progress-bar');
                     progressBar.style.width = '0%';  // Reset progress bar
                     progressBar.textContent = '';
                 } else {
-                    alert('Error uploading image file');
+                    alert('上传设备镜像文件时出错');
                 }
             };
 
             xhr.onerror = function () {
-                alert('Error uploading image file');
+                alert('上传设备镜像文件时出错');
             };
 
             xhr.send(formData);

@@ -13,6 +13,7 @@ app.config['UPLOAD_FOLDER'] = BASE_UPLOAD_FOLDER
 # Ensure the base folder exists
 if not os.path.exists(BASE_UPLOAD_FOLDER):
     os.makedirs(BASE_UPLOAD_FOLDER)
+    print(f"Created directory: {BASE_UPLOAD_FOLDER}")
 
 # Paths to configuration files
 config_file_path = '/app/flask_app/device_init_config.cfg'
@@ -24,48 +25,20 @@ def read_device_init_config():
         return file.read().split('\n')
 
 def read_device_init_stack():
-    with open(device_init_stack_file_path, 'r') as file:
-        return json.load(file)
+    if os.path.exists(device_init_stack_file_path):
+        with open(device_init_stack_file_path, 'r') as file:
+            return json.load(file)
+    else:
+        return {}
 
 @app.route('/device_config/<device_sn>', methods=['GET'])
 def device_config(device_sn):
-    config_list = read_device_init_config()
-    device_init_stack = read_device_init_stack()
+    try:
+        config_list = read_device_init_config()
+        device_init_stack = read_device_init_stack()
 
-    config = config_list.copy()  # Copy base configuration
-    response = {'config': config}
-
-    # Find the stack group containing the given serial number
-    for hostname, group_data in device_init_stack.items():
-        for switch in group_data['switches']:
-            if switch['serial_number'] == device_sn:
-                response.update({
-                    'stack_priority': switch['stack_priority'],
-                    'stack_number': switch['stack_number'],
-                    'version_upgrade': group_data['config']['version_upgrade'],
-                    'hostname': group_data['config']['hostname'],
-                    'interface_vlan': group_data['config']['interface_vlan'],
-                    'ip_address': group_data['config']['ip_address'],
-                    'subnet_mask': group_data['config']['subnet_mask'],
-                    'default_gateway': group_data['config']['default_gateway']
-                })
-                break
-
-    return Response(response=json.dumps(response),
-                    status=200,
-                    mimetype='application/json')
-
-@app.route('/device_config_json', methods=['POST'])
-def device_config_json():
-    client_post_data = request.json
-    config_list = read_device_init_config()
-    device_init_stack = read_device_init_stack()
-
-    response = {'config': config_list.copy()}  # Copy base configuration
-
-    if client_post_data:
-        device_sn = client_post_data.get('device_sn')
-        device_ip = client_post_data.get('device_ip')
+        config = config_list.copy()  # Copy base configuration
+        response = {'config': config}
 
         # Find the stack group containing the given serial number
         for hostname, group_data in device_init_stack.items():
@@ -75,7 +48,7 @@ def device_config_json():
                         'stack_priority': switch['stack_priority'],
                         'stack_number': switch['stack_number'],
                         'version_upgrade': group_data['config']['version_upgrade'],
-                        'hostname': group_data['config'].get('hostname'),
+                        'hostname': group_data['config']['hostname'],
                         'interface_vlan': group_data['config']['interface_vlan'],
                         'ip_address': group_data['config']['ip_address'],
                         'subnet_mask': group_data['config']['subnet_mask'],
@@ -83,14 +56,54 @@ def device_config_json():
                     })
                     break
 
-    return Response(response=json.dumps(response),
-                    status=200,
-                    mimetype='application/json')
+        return Response(response=json.dumps(response),
+                        status=200,
+                        mimetype='application/json')
+    except Exception as e:
+        print(f"Error reading device config: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route('/device_config_json', methods=['POST'])
+def device_config_json():
+    try:
+        client_post_data = request.json
+        config_list = read_device_init_config()
+        device_init_stack = read_device_init_stack()
+
+        response = {'config': config_list.copy()}  # Copy base configuration
+
+        if client_post_data:
+            device_sn = client_post_data.get('device_sn')
+            device_ip = client_post_data.get('device_ip')
+
+            # Find the stack group containing the given serial number
+            for hostname, group_data in device_init_stack.items():
+                for switch in group_data['switches']:
+                    if switch['serial_number'] == device_sn:
+                        response.update({
+                            'stack_priority': switch['stack_priority'],
+                            'stack_number': switch['stack_number'],
+                            'version_upgrade': group_data['config']['version_upgrade'],
+                            'hostname': group_data['config'].get('hostname'),
+                            'interface_vlan': group_data['config']['interface_vlan'],
+                            'ip_address': group_data['config']['ip_address'],
+                            'subnet_mask': group_data['config']['subnet_mask'],
+                            'default_gateway': group_data['config']['default_gateway']
+                        })
+                        break
+
+        return Response(response=json.dumps(response),
+                        status=200,
+                        mimetype='application/json')
+    except Exception as e:
+        print(f"Error reading device config JSON: {e}")
+        return jsonify({"success": False, "error": str(e)})
 
 @app.route('/update_json', methods=['POST'])
 def update_json():
     try:
         new_data = request.json
+        print(f"Received JSON data: {json.dumps(new_data, indent=4)}")  # Debugging output
         with open(device_init_stack_file_path, 'w') as file:
             json.dump(new_data, file, indent=4)
         return jsonify({"success": True})
@@ -120,14 +133,19 @@ def upload_csv():
 
     if file and file.filename.endswith('.csv'):
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        print(f"Saving file to: {filepath}")
         file.save(filepath)
 
         try:
             with open(filepath, newline='') as csvfile:
                 reader = csv.DictReader(csvfile)
-                device_init_stack = read_device_init_stack()
+                device_init_stack = {}
 
                 for row in reader:
+                    print(f"Processing row: {row}")
+                    if 'hostname' not in row or 'serial_number' not in row or 'stack_priority' not in row or 'stack_number' not in row:
+                        raise ValueError("CSV file missing required columns")
+
                     hostname = row['hostname']
                     if hostname not in device_init_stack:
                         device_init_stack[hostname] = {
@@ -171,7 +189,9 @@ def upload_image():
     if file:
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         try:
+            print(f"Saving image to: {filepath}")
             file.save(filepath)
+            print(f"File saved to {filepath}")
             return jsonify({"success": True, "filepath": filepath})
         except Exception as e:
             print(f"Error saving file: {e}")

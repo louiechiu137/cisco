@@ -1,3 +1,3 @@
 hostname,version_upgrade,interface_vlan,ip_address,subnet_mask,default_gateway,serial_number,stack_priority,stack_number
-hostname,cat9k_iosxe.17.09.05.SPA.bin,10,10.0.0.200,255.255.255.0,10.0.0.1,FOC1234444,10,10
-hostname,cat9k_iosxe.17.09.05.SPA.bin,10,10.0.0.200,255.255.255.0,10.0.0.1,FOC1235555,9,9
+hostname_1,cat9k_iosxe.17.09.05.SPA.bin,10,10.0.0.200,255.255.255.0,10.0.0.1,FOC1234X0K8,15,1
+hostname_2,cat9k_iosxe.17.09.05.SPA.bin,20,10.0.0.201,255.255.255.0,10.0.0.1,FOC5678X0K9,13,2
