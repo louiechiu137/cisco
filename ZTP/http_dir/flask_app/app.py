@@ -6,14 +6,14 @@ import csv
 app = Flask(__name__)
 app.debug = True
 
-# Configure base upload folder
-BASE_UPLOAD_FOLDER = '/usr/local/cisco/ZTP/http_dir/image'
-app.config['UPLOAD_FOLDER'] = BASE_UPLOAD_FOLDER
+# Configure image folder
+IMAGE_FOLDER = '/app/image'
+app.config['IMAGE_FOLDER'] = IMAGE_FOLDER
 
 # Ensure the base folder exists
-if not os.path.exists(BASE_UPLOAD_FOLDER):
-    os.makedirs(BASE_UPLOAD_FOLDER)
-    print(f"Created directory: {BASE_UPLOAD_FOLDER}")
+if not os.path.exists(IMAGE_FOLDER):
+    os.makedirs(IMAGE_FOLDER)
+    print(f"Created directory: {IMAGE_FOLDER}")
 
 # Paths to configuration files
 config_file_path = '/app/flask_app/device_init_config.cfg'
@@ -132,7 +132,7 @@ def upload_csv():
         return jsonify({"success": False, "error": "No selected file"})
 
     if file and file.filename.endswith('.csv'):
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        filepath = os.path.join(app.config['IMAGE_FOLDER'], file.filename)
         print(f"Saving file to: {filepath}")
         file.save(filepath)
 
@@ -187,7 +187,7 @@ def upload_image():
         return jsonify({"success": False, "error": "No selected file"})
 
     if file:
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        filepath = os.path.join(app.config['IMAGE_FOLDER'], file.filename)
         try:
             print(f"Saving image to: {filepath}")
             file.save(filepath)
@@ -208,7 +208,7 @@ def download_template():
 
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
-    return send_from_directory(BASE_UPLOAD_FOLDER, filename, as_attachment=True)
+    return send_from_directory(IMAGE_FOLDER, filename, as_attachment=True)
 
 @app.route('/day0-ztp.py', methods=['GET'])
 def serve_ztp_sample():
@@ -217,30 +217,6 @@ def serve_ztp_sample():
         return send_from_directory('/app/flask_app', 'day0-ztp.py')
     else:
         return abort(404, description="File not found")
-
-@app.route('/download', methods=['GET'])
-def list_files():
-    files = {}
-    for root, dirs, filenames in os.walk(BASE_UPLOAD_FOLDER):
-        # Get relative path
-        relative_root = os.path.relpath(root, BASE_UPLOAD_FOLDER)
-        if relative_root == '.':
-            relative_root = ''
-        files[relative_root] = filenames
-
-    # Create HTML content
-    html_content = "<h1>Files and Directories in /usr/local/cisco/ZTP/http_dir/image</h1><ul>"
-    for folder, filenames in files.items():
-        if folder:
-            html_content += f"<h2>{folder}</h2><ul>"
-        for filename in filenames:
-            file_url = f"/download/{folder}/{filename}" if folder else f"/download/{filename}"
-            html_content += f'<li><a href="{file_url}">{filename}</a></li>'
-        if folder:
-            html_content += "</ul>"
-    html_content += "</ul>"
-
-    return html_content
 
 @app.route('/')
 def serve_index():

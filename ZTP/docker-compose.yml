@@ -5,7 +5,7 @@ services:
     ports:
       - "67:67/udp"
     volumes:
-      - /usr/local/cisco/ZTP/dhcpd_dir/data:/data
+      - ./dhcpd_dir/data:/data
     network_mode: "host"
     cap_add:
       - NET_ADMIN
@@ -17,6 +17,6 @@ services:
     ports:
       - "80:80"
     volumes:
-      - /usr/local/cisco/ZTP/http_dir/flask_app:/app/flask_app
-      - /usr/local/cisco/ZTP/http_dir/image:/app/image
+      - ./http_dir/flask_app:/app/flask_app
+      - ./http_dir/image:/app/image
     restart: always

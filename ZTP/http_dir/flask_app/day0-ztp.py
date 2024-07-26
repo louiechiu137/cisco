@@ -169,6 +169,7 @@ def main():
             configurep(other_commands)
 
         # 获取 switch id 并应用堆叠配置
+        print("\n\n *** ZTP Day0 Python Script Stacking *** \n\n")
         if stack_priority and stack_number:
             normalized_mac = normalize_mac_address(base_mac)
             switch_id = get_switch_id_by_mac(normalized_mac)
@@ -178,28 +179,29 @@ def main():
             else:
                 print(f"Error: Could not find switch id for MAC address {base_mac}")
 
-        # 应用版本升级前检查当前版本
-        current_version_match = re.search(r"Cisco IOS XE Software, Version ([0-9.]+)", version_result)
-        if current_version_match:
-            current_version = current_version_match.group(1).strip()
-            if current_version != version_upgrade:
-                # 下载版本文件到交换机的 flash
-                download_url = f'http://10.0.0.131/download/{version_upgrade}'
-                local_file_guestshell = f'/bootflash/guest-share/{version_upgrade}'
-                process = subprocess.Popen(['curl', '-o', local_file_guestshell, download_url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdout, stderr = process.communicate()
-                if process.returncode != 0:
-                    print(f"Error downloading image: {stderr.decode()}")
-                    return
+    # 应用版本升级前检查当前版本
+    print("\n\n *** ZTP Day0 Python Script Downloading *** \n\n")
+    current_version_match = re.search(r"Cisco IOS XE Software, Version ([0-9.]+)", version_result)
+    if current_version_match:
+        current_version = current_version_match.group(1).strip()
+        if current_version != version_upgrade:
+            # 下载版本文件到交换机的 flash
+            download_url = f'http://10.0.0.131/download/{version_upgrade}'
+            local_file_guestshell = f'/bootflash/guest-share/{version_upgrade}'
+            process = subprocess.Popen(['curl', '-o', local_file_guestshell, download_url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = process.communicate()
+            if process.returncode != 0:
+                print(f"Error downloading image: {stderr.decode()}")
+                return
+            print("\n\n *** ZTP Day0 Python Script Downloading Complete *** \n\n")
 
     deploy_eem_check_version(version_upgrade)
     deploy_eem_upgrade_script(version_upgrade)
     deploy_eem_cleanup_script()
-    time.sleep(10)
-    cli('write memory')
     time.sleep(5)
-    cli('reload')
-
+    executep('write memory')
+    time.sleep(5)
+    executep('reload')
     print("\n\n *** ZTP Day0 Python Script Execution Complete *** \n\n")
 
 # 确保脚本作为主程序运行
