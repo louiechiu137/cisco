@@ -124,22 +124,23 @@ def update_config():
 
 @app.route('/upload_csv', methods=['POST'])
 def upload_csv():
-    if 'file' not in request.files:
-        return jsonify({"success": False, "error": "No file part"})
+    try:
+        if 'file' not in request.files:
+            return jsonify({"success": False, "error": "No file part"})
 
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"success": False, "error": "No selected file"})
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"success": False, "error": "No selected file"})
 
-    if file and file.filename.endswith('.csv'):
-        filepath = os.path.join(app.config['IMAGE_FOLDER'], file.filename)
-        print(f"Saving file to: {filepath}")
-        file.save(filepath)
+        if file and file.filename.endswith('.csv'):
+            filepath = os.path.join(app.config['IMAGE_FOLDER'], file.filename)
+            print(f"Saving file to: {filepath}")
+            file.save(filepath)
 
-        try:
+            device_init_stack = {}
+
             with open(filepath, newline='') as csvfile:
                 reader = csv.DictReader(csvfile)
-                device_init_stack = {}
 
                 for row in reader:
                     print(f"Processing row: {row}")
@@ -166,14 +167,18 @@ def upload_csv():
                         "stack_number": int(row['stack_number'])
                     })
 
-                with open(device_init_stack_file_path, 'w') as jsonfile:
-                    json.dump(device_init_stack, jsonfile, indent=4)
+            # 覆盖现有的 JSON 文件
+            with open(device_init_stack_file_path, 'w') as jsonfile:
+                json.dump(device_init_stack, jsonfile, indent=4)
 
             return jsonify({"success": True})
 
-        except Exception as e:
-            print(f"Error processing CSV file: {e}")
-            return jsonify({"success": False, "error": str(e)})
+    except ValueError as ve:
+        print(f"ValueError processing CSV file: {ve}")
+        return jsonify({"success": False, "error": str(ve)})
+    except Exception as e:
+        print(f"Error processing CSV file: {e}")
+        return jsonify({"success": False, "error": str(e)})
 
     return jsonify({"success": False, "error": "Invalid file format"})
 

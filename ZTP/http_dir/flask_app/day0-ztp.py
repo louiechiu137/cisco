@@ -9,11 +9,9 @@ import subprocess
 import re
 
 def normalize_mac_address(mac_address):
-    """将 MAC 地址规范化为小写并去除分隔符"""
     return mac_address.replace(":", "").replace(".", "").lower()
 
 def extract_mac_from_show_version():
-    """从 'show version' 输出中提取 Base Ethernet MAC Address"""
     version_result = cli('show version')
     mac_pattern = re.compile(r"Base Ethernet MAC Address\s+:\s+([0-9a-fA-F:]+)")
     match = mac_pattern.search(version_result)
@@ -22,7 +20,6 @@ def extract_mac_from_show_version():
     return None
 
 def get_switch_id_by_mac(normalized_mac):
-    """通过规范化的 MAC 地址获取 switch id"""
     show_switch_output = cli('show switch').split('\n')
 
     for line in show_switch_output:
@@ -31,8 +28,8 @@ def get_switch_id_by_mac(normalized_mac):
             line_mac = normalize_mac_address(match.group(1))
             if normalized_mac == line_mac:
                 fields = line.split()
-                if len(fields) >= 2:  # 确保 `fields` 列表中包含至少 2 个元素
-                    switch_id = fields[0].strip().lstrip('*')  # 去掉可能存在的星号
+                if len(fields) >= 2:
+                    switch_id = fields[0].strip().lstrip('*')
                     if switch_id.isdigit():
                         return switch_id
     return None
@@ -169,7 +166,7 @@ def main():
             configurep(other_commands)
 
         # 获取 switch id 并应用堆叠配置
-        print("\n\n *** ZTP Day0 Python Script Stacking *** \n\n")
+        print("\n\n ***  Stack configure  *** \n\n")
         if stack_priority and stack_number:
             normalized_mac = normalize_mac_address(base_mac)
             switch_id = get_switch_id_by_mac(normalized_mac)
@@ -180,12 +177,13 @@ def main():
                 print(f"Error: Could not find switch id for MAC address {base_mac}")
 
     # 应用版本升级前检查当前版本
-    print("\n\n *** ZTP Day0 Python Script Downloading *** \n\n")
     current_version_match = re.search(r"Cisco IOS XE Software, Version ([0-9.]+)", version_result)
     if current_version_match:
         current_version = current_version_match.group(1).strip()
+        print("\n\n ***  Version match  *** \n\n")
         if current_version != version_upgrade:
             # 下载版本文件到交换机的 flash
+            print("\n\n ***  Start downloading  *** \n\n")
             download_url = f'http://10.0.0.131/download/{version_upgrade}'
             local_file_guestshell = f'/bootflash/guest-share/{version_upgrade}'
             process = subprocess.Popen(['curl', '-o', local_file_guestshell, download_url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -193,7 +191,7 @@ def main():
             if process.returncode != 0:
                 print(f"Error downloading image: {stderr.decode()}")
                 return
-            print("\n\n *** ZTP Day0 Python Script Downloading Complete *** \n\n")
+            print("\n\n *** Download completes *** \n\n")
 
     deploy_eem_check_version(version_upgrade)
     deploy_eem_upgrade_script(version_upgrade)
