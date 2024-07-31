@@ -41,7 +41,6 @@
         input, textarea {
             width: 100%;
             padding: 12px;
-            margin-bottom: 10px;
             border: 1px solid #ddd;
             border-radius: 6px;
             box-sizing: border-box;
@@ -78,7 +77,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            margin-bottom: 15px;
+            padding: 10px 0 10px 0;
         }
         .switch-entry input {
             flex: 1 1 200px;
@@ -87,7 +86,6 @@
             color: red;
             display: none;
             width: 100%;
-            margin-top: 5px;
         }
         .section {
             margin-bottom: 30px;
@@ -139,7 +137,7 @@
         </div>
         <div id="switchesContainer" class="section">
             <h2>Switch Information</h2>
-            <div id="switchesContainerRows">
+            <div id="switchesContainerRows"></div>
             <div class="section button-group">
                 <button class="half-width" type="button" onclick="addSwitch()">Add Switch</button>
                 <button class="half-width" type="button" onclick="removeSwitch()">Remove Switch</button>
@@ -484,13 +482,15 @@
             };
 
             xhr.send(formData);
+        }
+
+
 
         document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < 4; i++) {
                 addSwitch();
             }
         });
-        }
     </script>
 </body>
 </html>
