@@ -121,67 +121,74 @@ def main():
             device_ip = x.split()[1]
 
     # 配置设备主机名为型号加序列号
-    if device_sn and model_number:
-        hostname_init = f"{model_number}-{device_sn}"
-        configurep([f"hostname {hostname_init}"])
+    if not device_sn or not model_number:
+        return
 
-        # 准备要发送的数据
-        data = json.dumps({
-            "model_number": model_number,
-            "device_sn": device_sn,
-            "device_ip": device_ip
-        })
+    hostname_init = f"{model_number}-{device_sn}"
+    configurep([f"hostname {hostname_init}"])
 
-        # 使用 curl 命令发送 POST 请求
-        yin = "'"  # 用于避免 SyntaxError
-        result = os.popen(
-            f'curl -X POST -H "Content-Type: application/json" -d {yin}{data}{yin} http://10.0.0.131/device_config_json')
+    # 准备要发送的数据
+    data = json.dumps({
+        "model_number": model_number,
+        "device_sn": device_sn,
+        "device_ip": device_ip
+    })
 
-        # 读取并解析响应
-        response = json.loads(result.read())
-        config_list = response.get('config')
+    # 使用 curl 命令发送 POST 请求
+    yin = "'"  # 用于避免 SyntaxError
+    result = os.popen(
+        f'curl -X POST -H "Content-Type: application/json" -d {yin}{data}{yin} http://10.0.0.131/device_config_json')
 
-        # 应用接收到的配置
-        if config_list:
-            configurep(config_list)
+    # 读取并解析响应
+    response = json.loads(result.read())
+    config_list = response.get('config')
 
-        # 获取设备特定的堆叠配置和版本升级信息
-        stack_priority = response.get('stack_priority')
-        stack_number = response.get('stack_number')
-        hostname = response.get('hostname')
-        version_upgrade = response.get('version_upgrade')
-        interface_vlan = response.get('interface_vlan')
-        ip_address = response.get('ip_address')
-        subnet_mask = response.get('subnet_mask')
-        default_gateway = response.get('default_gateway')
+    # 应用接收到的配置
+    if config_list:
+        configurep(config_list)
 
-        # 配置 特殊配置
-        if hostname or interface_vlan or ip_address or subnet_mask or default_gateway:
-            other_commands = [
-                f"hostname {hostname}",
-                f"vlan {interface_vlan}",
-                f"interface vlan{interface_vlan}\n ip address {ip_address} {subnet_mask}",
-                f"ip route 0.0.0.0 0.0.0.0 {default_gateway}"
-            ]
-            configurep(other_commands)
+    # 获取设备特定的堆叠配置和版本升级信息
+    stack_priority = response.get('stack_priority')
+    stack_number = response.get('stack_number')
+    hostname = response.get('hostname')
+    version_upgrade = response.get('version_upgrade')
+    interface_vlan = response.get('interface_vlan')
+    ip_address = response.get('ip_address')
+    subnet_mask = response.get('subnet_mask')
+    default_gateway = response.get('default_gateway')
 
-        # 获取 switch id 并应用堆叠配置
-        print("\n\n ***  Stack configure  *** \n\n")
-        if stack_priority and stack_number:
-            normalized_mac = normalize_mac_address(base_mac)
-            switch_id = get_switch_id_by_mac(normalized_mac)
-            if switch_id:
-                cli(f'switch {switch_id} priority {stack_priority}')
-                cli(f'switch {switch_id} renumber {stack_number}')
-            else:
-                print(f"Error: Could not find switch id for MAC address {base_mac}")
+    # 配置 特殊配置
+    if hostname or interface_vlan or ip_address or subnet_mask or default_gateway:
+        other_commands = [
+            f"hostname {hostname}",
+            f"vlan {interface_vlan}",
+            f"interface vlan{interface_vlan}\n ip address {ip_address} {subnet_mask}",
+            f"ip route 0.0.0.0 0.0.0.0 {default_gateway}"
+        ]
+        configurep(other_commands)
+
+    # 获取 switch id 并应用堆叠配置
+    print("\n\n ***  Stack configure  *** \n\n")
+    if stack_priority and stack_number:
+        normalized_mac = normalize_mac_address(base_mac)
+        switch_id = get_switch_id_by_mac(normalized_mac)
+        if switch_id:
+            cli(f'switch {switch_id} priority {stack_priority}')
+            cli(f'switch {switch_id} renumber {stack_number}')
+        else:
+            print(f"Error: Could not find switch id for MAC address {base_mac}")
 
     # 应用版本升级前检查当前版本
-    current_version_match = re.search(r"Cisco IOS XE Software, Version ([0-9.]+)", version_result)
-    if current_version_match:
+    version_pat = r'\d+\.\d+\.\d+'
+    current_version_match = re.search(rf"Cisco IOS XE Software, Version ({version_pat})", version_result)
+    version_upgrade_match = re.search(rf'\.({version_pat})\.', version_upgrade)
+
+    if current_version_match and version_upgrade_match:
         current_version = current_version_match.group(1).strip()
-        print("\n\n ***  Version match  *** \n\n")
-        if current_version != version_upgrade:
+        upgrade_version = version_upgrade_match.group(1).strip()
+
+        if current_version != upgrade_version:
+            print("\n\n ***  Version mismatch  *** \n\n")
             # 下载版本文件到交换机的 flash
             print("\n\n ***  Start downloading  *** \n\n")
             download_url = f'http://10.0.0.131/download/{version_upgrade}'
@@ -192,6 +199,8 @@ def main():
                 print(f"Error downloading image: {stderr.decode()}")
                 return
             print("\n\n *** Download completes *** \n\n")
+        else:
+            print("\n\n ***  Version match  *** \n\n")
 
     deploy_eem_check_version(version_upgrade)
     deploy_eem_upgrade_script(version_upgrade)
