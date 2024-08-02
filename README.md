@@ -23,7 +23,8 @@
 - **JSON 配置管理**：管理和更新设备配置的 JSON 文件。
 - **设备图像上传**：支持设备固件或操作系统的上传和管理。
 - **文件下载模板**：提供 CSV 模板下载，便于批量配置。
-<img width="1409" alt="image" src="https://github.com/user-attachments/assets/0e01218d-faf0-42f7-8a91-ee906005ad6a">
+![Uploading image.png…]()
+
 
 ## 安装
 
