@@ -21,9 +21,11 @@
 - **自动化设备配置**：设备开机后自动获取配置文件并应用。
 - **CSV 文件上传**：支持通过 CSV 文件批量上传设备配置。
 - **JSON 配置管理**：管理和更新设备配置的 JSON 文件。
-- **设备图像上传**：支持设备固件或操作系统的上传和管理。
+- **设备镜像上传**：支持设备固件或操作系统的上传和管理。
 - **文件下载模板**：提供 CSV 模板下载，便于批量配置。
-<img width="1409" alt="image" src="https://github.com/user-attachments/assets/0e01218d-faf0-42f7-8a91-ee906005ad6a">
+![WX20240802-122940@2x](https://github.com/user-attachments/assets/f96d846c-fe79-4eac-b1f3-2142e5710aa6)
+
+
 
 ## 安装
 
@@ -65,9 +67,9 @@
     - 点击“Download CSV Template”按钮下载模板文件。
     - 使用模板文件创建新的设备配置并上传。
 
-4. 上传设备图像：
+4. 上传设备镜像：
 
-    - 在“Upload Device Image”部分选择一个设备图像文件并点击“Upload Image”按钮。
+    - 在“Upload Device Image”部分选择一个设备镜像文件并点击“Upload Image”按钮。
     - 系统会显示上传进度并完成上传。
 
 5. 查看和管理设备配置：
