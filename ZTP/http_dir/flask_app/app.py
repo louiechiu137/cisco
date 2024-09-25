@@ -70,35 +70,49 @@ def device_config_json():
         config_list = read_device_init_config()
         device_init_stack = read_device_init_stack()
 
-        response = {'config': config_list.copy()}  # Copy base configuration
+        # response = {}  # 初始化空字典
+        response = {'config_template': config_list.copy()}
 
         if client_post_data:
             device_sn = client_post_data.get('device_sn')
             device_ip = client_post_data.get('device_ip')
+            model_number = client_post_data.get('model_number')
 
-            # Find the stack group containing the given serial number
+            # 查找包含给定序列号的堆叠组
             for hostname, group_data in device_init_stack.items():
                 for switch in group_data['switches']:
                     if switch['serial_number'] == device_sn:
-                        response.update({
-                            'stack_priority': switch['stack_priority'],
-                            'stack_number': switch['stack_number'],
-                            'version_upgrade': group_data['config']['version_upgrade'],
-                            'hostname': group_data['config'].get('hostname'),
-                            'interface_vlan': group_data['config']['interface_vlan'],
-                            'ip_address': group_data['config']['ip_address'],
-                            'subnet_mask': group_data['config']['subnet_mask'],
-                            'default_gateway': group_data['config']['default_gateway']
-                        })
-                        break
+                        # 如果 hostname 为空，使用 device_sn 作为键
+                        response_key = hostname if hostname else device_sn
 
-        return Response(response=json.dumps(response),
-                        status=200,
-                        mimetype='application/json')
+                        # 构建响应数据
+                        response.update({
+                            response_key: {
+                                "config": {
+                                    "version_upgrade": group_data['config'].get('version_upgrade', ''),
+                                    "hostname": group_data['config'].get('hostname', ''),
+                                    "interface_vlan": group_data['config'].get('interface_vlan', ''),
+                                    "ip_address": group_data['config'].get('ip_address', ''),
+                                    "subnet_mask": group_data['config'].get('subnet_mask', ''),
+                                    "default_gateway": group_data['config'].get('default_gateway', '')
+                                },
+                                "switches": group_data['switches']
+                            }
+                        })
+                        break  # 找到匹配的序列号后退出循环
+
+            if not response:
+                # 如果未找到匹配的序列号，可以返回默认配置或错误信息
+                return jsonify({"success": False, "error": "Device serial number not found in configuration."}), 404
+
+            return Response(response=json.dumps(response),
+                            status=200,
+                            mimetype='application/json')
+        else:
+            return jsonify({"success": False, "error": "No data received."}), 400
     except Exception as e:
         print(f"Error reading device config JSON: {e}")
-        return jsonify({"success": False, "error": str(e)})
-
+        return jsonify({"success": False, "error": str(e)}), 500
 @app.route('/update_json', methods=['POST'])
 def update_json():
     try:
